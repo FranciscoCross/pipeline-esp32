@@ -1,63 +1,76 @@
-# Pipeline-ESP32
-El objetivo de este proyecto es crear un Pipeline DevOps para dispositivos de Internet de las Cosas (Internet of Things, IoT), en este caso un microcontrolador ESP32. El objetivo principal es tener un workflow con una serie de acciones que se desencadenan cuando se pushean cambios en la carpeta de codigo fuente del repositorio.
+# Blink Example
 
-## Para Comenzar
-### Fork Repository
-Lo primero que se necesita es forkear este repositorio en su cuenta de GitHub, porque necesitará un access token para darle permisos al runner.
+(See the README.md file in the upper level 'examples' directory for more information about examples.)
 
-![Fork](/img/GithubFork.jpg)
+This example demonstrates how to blink a LED using GPIO or RMT for the addressable LED, i.e. [WS2812](http://www.world-semi.com/Certifications/WS2812B.html).
 
-Una vez listo el fork, clone el repositorio, preferentemente usando SSH.
+See the RMT examples in the [RMT Peripheral](../../peripherals/rmt) for more information about how to use it.
 
-### Docker Compose
-El próximo paso es intalar Docker Compose. Se recomienda ampliamente usar Linux, aunque se puede usar Windows. En distribuciones basadas en Ubuntu se puede instalar con el comando:
+## How to Use Example
+
+Before project configuration and build, be sure to set the correct chip target using `idf.py set-target <chip_name>`.
+
+### Hardware Required
+
+* A development board with ESP32/ESP32-S2/ESP32-S3/ESP32-C3 SoC (e.g., ESP32-DevKitC, ESP-WROVER-KIT, etc.)
+* A USB cable for Power supply and programming
+
+Some development boards use an addressable LED instead of a regular one. These development boards include:
+
+| Board                | LED type             | Pin                  |
+| -------------------- | -------------------- | -------------------- |
+| ESP32-C3-DevKitC-1   | Addressable          | GPIO8                |
+| ESP32-C3-DevKitM-1   | Addressable          | GPIO8                |
+| ESP32-S2-DevKitM-1   | Addressable          | GPIO18               |
+| ESP32-S2-Saola-1     | Addressable          | GPIO18               |
+| ESP32-S3-DevKitC-1   | Addressable          | GPIO48               |
+
+See [Development Boards](https://www.espressif.com/en/products/devkits) for more information about it.
+
+### Configure the Project
+
+Open the project configuration menu (`idf.py menuconfig`). 
+
+In the `Example Configuration` menu:
+
+* Select the LED type in the `Blink LED type` option.
+    * Use `GPIO` for regular LED blink.
+    * Use `RMT` for addressable LED blink.
+        * Use `RMT Channel` to select the RMT peripheral channel.
+* Set the GPIO number used for the signal in the `Blink GPIO number` option.
+* Set the blinking period in the `Blink period in ms` option.
+
+### Build and Flash
+
+Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
+
+(To exit the serial monitor, type ``Ctrl-]``.)
+
+See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for full steps to configure and use ESP-IDF to build projects.
+
+## Example Output
+
+As you run the example, you will see the LED blinking, according to the previously defined period. For the addressable LED, you can also change the LED color by setting the `pStrip_a->set_pixel(pStrip_a, 0, 16, 16, 16);` (LED Strip, Pixel Number, Red, Green, Blue) with values from 0 to 255 in the `blink.c` file.
+
 ```
-sudo apt install docker-compose
-```
-Para Windows (u otro SO) por favor diríjase a [Docker Documentation](https://docs.docker.com/desktop/windows/install).
-
-### Credenciales
-Por motivos de seguridad debe crear un GitHub Access Token, el cual le da permisos sobre su cuenta de GitHub para permitir que un self-hosted runner pueda ejecutar las tareas (jobs) del pipeline.
-Cree un archivo llamado ".env" en la carpeta raíz de su repositorio. Nótese que este archivo está incluido en el .gitignore, ya que sus credenciales no se deben compartir. En este archivo debe agregar:
-```
-RUNNER_REPOSITORY_URL=URL of your Forked Repository
-GITHUB_ACCESS_TOKEN=Your Token
-```
-![DevSettings](/img/GithubDevSettings.jpg)
-
-Para crear un nuevo GitHub Access Token, vaya a Ajustes, Ajustes de Desarrollador (Developer Settings, abajo), Personal Access Tokens, y clickee en **Generar nuevo token**. Obtendrá una secuencia larga de caracteres, cópiela y péguela en el archivo .env en los campos indicados previamente. No podrá recuperar este token, así que si pierde su archivo .env y necesita el token, necesitará crear un nuevo token y reemplazarlo.
-
-Al generar un nuevo token, debe elegir que permisos asignarle, asegúrese de tildar los siguientes:
-- **repo**
-- **workflow**
-
-![AccessToken](/img/GithubAccessToken.jpg)
-
-### ESP32 USB Connection
-Para cargar código al ESP32 considere:
-- Si está usando Windows o una máquina virtual, se necesita presionar el botón BOOT mientras el programa está siendo cargado, de otro modo el sistema avisará con un error que indica que la placa no está en modo de flasheo.
-- Se recomienda usar Linux, ya que no se necesita presionar el botón BOOT, pero es necesario darle permisos de escritura al puerto USB, de preferencia al USB 0.
-- Para darle permisos de escritura a los puertos USB: (Reinicio necesario)
-```
-sudo usermod -a -G dialout $USER
+I (315) example: Example configured to blink addressable LED!
+I (325) example: Turning the LED OFF!
+I (1325) example: Turning the LED ON!
+I (2325) example: Turning the LED OFF!
+I (3325) example: Turning the LED ON!
+I (4325) example: Turning the LED OFF!
+I (5325) example: Turning the LED ON!
+I (6325) example: Turning the LED OFF!
+I (7325) example: Turning the LED ON!
+I (8325) example: Turning the LED OFF!
 ```
 
-### Self-Hosted Containerized Runner
-Un Runner es un servidor que ejecuta las acciones (o jobs) incluídas en el workflow de este repositorio, que se encuentra en la carpeta **.github/workflow**. Un runner self-hosted significa que se ejecutará de forma local en su computadora, y conteinerizado significa que se usa un contenedor de Docker para mantener las dependencias lo más simple posible.
-Para ejecutar el runner, abra una terminal en la carpeta raíz del repositorio y corra este comando:
-```
-sudo docker-compose up
-```
-La inicialización del contenedor tomará aproximadamente 4 minutos. En caso de un error de configuración con el access token, el runner lo notificará como un error de autenticación de GitHub.
+Note: The color order could be different according to the LED model.
 
-## Workflow
-Para desencadenar el workflow se necesita pushear cambios en las carpetas: **/src/**, **/include/** y **/test/**. Nuestra recomendación es cambiar únicamente la frecuencia de parpadeo del LED, y dejar el resto del código como está. Cambie el define DELAY de la línea 7 de **/include/blink.h** a un valor que pueda distinguir fácilmente en el parpadeo del LED de la placa. Por ejemplo, alterne entre 200 y 2000 ms de DELAY. Después de pushear los cambios, el código va a compilarse, testearse y cargarse en la placa automáticamente. Esta es la ventaja de DevOps, ahorrar tiempo y evitar cometer errores.
+The pixel number indicates the pixel position in the LED strip. For a single LED, use 0.
 
-### Tests
-Hay 2 tests simples que se realizan antes de cargar el código a la placa. El primero es chequear si el valor de DELAY es mayor o igual a 50 ms, y el segundo es si el valor de DELAY es menor o igual a 5000 ms.
-Si se elije un valor fuera del **rango válido de DELAY (50 - 5000ms)**, los tests fallarán y **el código no se cargará en la placa**, simulando una prevención de posibles daños.
+## Troubleshooting
 
-## Referencias
-- [Docker](https://www.docker.com)
-- [TCardonne GitHub Runner](https://registry.hub.docker.com/r/tcardonne/github-runner)
-- [PlatformIO](https://platformio.org)
+* If the LED isn't blinking, check the GPIO or the LED type selection in the `Example Configuration` menu.
+
+For any technical queries, please open an [issue](https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you soon.

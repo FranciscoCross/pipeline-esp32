@@ -1,8 +1,0 @@
-sudo chmod 666 /dev/ttyUSB0
-pio run --target upload --upload-port /dev/ttyUSB0 --environment nodemcu-32s
-#GAT: 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
-docker run -it --name my-runner \
-    -e RUNNER_NAME=my-runner \
-    -e GITHUB_ACCESS_TOKEN=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 \
-    -e RUNNER_REPOSITORY_URL=https://github.com/FeedehC/pipeline-esp32 \
-    tcardonne/github-runner

@@ -1,17 +1,18 @@
-version: "3.7"
+version: "3.8"
 
 services:
-  runner:
-    image: tcardonne/github-runner:ubuntu-20.04
-    container_name: runner-self-hosted
-    privileged: true
-    environment:
-      RUNNER_NAME: "my-runner"
-      RUNNER_REPOSITORY_URL: ${RUNNER_REPOSITORY_URL}
-      #RUNNER_ORGANIZATION_URL: ${RUNNER_ORGANIZATION_URL}
-      GITHUB_ACCESS_TOKEN: ${GITHUB_ACCESS_TOKEN}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sockz
 
+  idf-sdk:
+    container_name: idf-sdk
+    image: "espressif/idf:v4.4.2"
+    working_dir: /project
+    volumes:
+      - "./:/project"
+    restart: "on-failure"
+    env_file:
+      - .env
+    command: idf.py build 
+    tty: true
     devices:
-      - '/dev/ttyUSB0:/dev/ttyUSB0'
+      - /dev/ttyUSB0:/dev/ttyUSB0
+
